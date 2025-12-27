@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${resume.cv.name} + ' - Resume'"></title>
+    <style th:inline="css">
+        @page { size: letter; margin: 0; }
+        body {
+            font-family: "[(${selectedFont})]", sans-serif;
+            margin: 0; padding: 0;
+            color: [(${resume.design?.colors?.body ?: '#333'})];
+            line-height: 1.2;
+        }
+        .container { display: table; width: 100%; border-collapse: collapse; }
+        .sidebar {
+            display: table-cell; width: 30%;
+            background-color: [(${resume.design?.colors?.sidebarBackground ?: '#F8FAFC'})];
+            border-right: 1.2pt solid #CBD5E1; padding: 25pt 15pt; vertical-align: top;
+        }
+        .main { display: table-cell; width: 70%; padding: 25pt 20pt; vertical-align: top; }
+        .profile-img {
+            width: 85pt; height: 85pt; border-radius: 4pt;
+            margin-bottom: 15pt; border: 1.5pt solid [(${resume.design?.colors?.name ?: '#004F90'})]; display: block;
+        }
+        .name-header {
+            font-size: 26pt; color: [(${resume.design?.colors?.name ?: '#004F90'})];
+            font-weight: 700; margin: 0;
+        }
+        .tagline {
+            font-size: 10pt; color: [(${resume.design?.colors?.body ?: '#475569'})];
+            margin-top: 4pt; font-weight: 600;
+            border-bottom: 1.5pt solid [(${resume.design?.colors?.name ?: '#004F90'})];
+            padding-bottom: 4pt;
+        }
+        .sidebar-header {
+            font-weight: 700; font-size: 10pt;
+            color: [(${resume.design?.colors?.sectionTitles ?: '#004F90'})];
+            text-transform: uppercase; margin-top: 15pt; margin-bottom: 5pt;
+            border-bottom: 0.5pt solid #CBD5E1;
+        }
+        .sidebar-item { font-size: 9pt; margin-bottom: 5pt; }
+        .sidebar-bold { font-weight: 700; display: block; }
+        .section-title {
+            font-size: 11pt; font-weight: 700;
+            color: [(${resume.design?.colors?.sectionTitles ?: '#004F90'})];
+            border-bottom: 1pt solid [(${resume.design?.colors?.sectionTitles ?: '#004F90'})];
+            margin-top: 14pt; margin-bottom: 6pt;
+            text-transform: uppercase;
+        }
+        .entry { margin-bottom: 10pt; }
+        .entry-title { font-weight: 700; font-size: 10pt; color: [(${resume.design?.colors?.titles ?: '#1E293B'})]; }
+        .float-right { float: right; font-weight: normal; font-style: italic; color: #64748B; font-size: 8.5pt; }
+        .entry-meta { color: [(${resume.design?.colors?.subtitles ?: '#64748B'})]; font-size: 8.5pt; font-style: italic; }
+        ul { margin: 2pt 0 0 10pt; padding: 0; list-style-type: disc; }
+        li { font-size: 9pt; margin-bottom: 2pt; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <img th:if="${resume.cv.photoUrl}" th:src="${resume.cv.photoUrl}" class="profile-img" />
+
+        <div class="sidebar-header">Contact</div>
+        <div class="sidebar-item" th:utext="${resume.cv.email}">email</div>
+        <div class="sidebar-item" th:utext="${resume.cv.location}">location</div>
+
+        <div th:each="key : ${resume.design.layout.sidebar}" th:if="${resume.cv.sections?.containsKey(key)}">
+            <div th:with="data=${resume.cv.sections.get(key)}">
+                <div class="sidebar-header" th:utext="${key}">TITLE</div>
+                <div th:if="${data instanceof T(java.util.List)}">
+                    <div th:each="item : ${data}" class="sidebar-item">
+                        <div th:if="${item instanceof T(java.util.Map)}">
+                            <span class="sidebar-bold" th:utext="${item['institution'] ?: item['name'] ?: item['title'] ?: item.values().iterator().next()}">Header</span>
+                            <div th:utext="${item['area'] ?: item['issuer'] ?: item['details'] ?: ''}">Sub</div>
+                            <div style="color: #64748B; font-size: 8pt;" th:utext="${item['date']}">Date</div>
+                        </div>
+                        <div th:if="${item instanceof T(java.lang.String)}" th:utext="'• ' + ${item}">String</div>
+                    </div>
+                </div>
+                <div th:if="${data instanceof T(java.lang.String)}" th:utext="${data}" class="sidebar-item">Text</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <h1 class="name-header" th:utext="${resume.cv.name}">NAME</h1>
+        <div class="tagline" th:if="${resume.cv.sections?.containsKey('tagline')}" th:utext="${resume.cv.sections['tagline']}">Tagline</div>
+
+        <div th:each="key : ${resume.design.layout.main}" th:if="${resume.cv.sections?.containsKey(key) and key != 'tagline'}">
+            <div th:with="data=${resume.cv.sections.get(key)}">
+                <div class="section-title" th:utext="${key}">SECTION</div>
+
+                <div th:if="${data instanceof T(java.util.List)}">
+                    <div th:each="item : ${data}" class="entry">
+                        <div th:if="${item instanceof T(java.util.Map)}">
+                            <div class="entry-title">
+                                <span th:utext="${item['company'] ?: item['title'] ?: item['name'] ?: item.values().iterator().next()}">Title</span>
+                                <span class="float-right" th:utext="${item['date']}">Date</span>
+                            </div>
+                            <div class="entry-meta" th:utext="${item['position'] ?: item['subtitle'] ?: ''}">Meta</div>
+                            <ul th:if="${item['highlights']}">
+                                <li th:each="h : ${item['highlights']}" th:utext="${h}">Highlight</li>
+                            </ul>
+                        </div>
+                        <div th:if="${item instanceof T(java.lang.String)}" th:utext="${item}"></div>
+                    </div>
+                </div>
+                <div th:if="${data instanceof T(java.lang.String)}" style="font-size: 9.5pt;" th:utext="${data}">Text</div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
